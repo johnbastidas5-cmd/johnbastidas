@@ -129,19 +129,6 @@ h1, h2, h3, h4 {
 }
 </style>
 """, unsafe_allow_html=True)
-# -------------------------- Gatito random (sticker) --------------------------
-if "show_cat" not in st.session_state:
-    st.session_state.show_cat = False
-    st.session_state.cat_time = 0
-
-# Aparece de forma aleatoria (aprox 18% de las veces al cargar/interactuar)
-if random.random() < 0.18 and (time.time() - st.session_state.cat_time > 12):
-    st.session_state.show_cat = True
-    st.session_state.cat_time = time.time()
-
-if st.session_state.show_cat:
-    cats = ["🐱", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾", "🐈", "🐈‍⬛"]
-    st.markdown(f'<div class="sticker">{random.choice(cats)}</div>', unsafe_allow_html=True)
 
 # -------------------------- Datos oficiales --------------------------
 @st.cache_data
