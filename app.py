@@ -458,4 +458,4 @@ Solo **23 departamentos + Bogotá**. Los demás aparecen en gris porque el DANE 
     """)
 
 st.markdown("---")
-st.caption("Investigación con datos oficiales DANE · Diseño moderno · Toque melo 🐱")
+st.caption("Investigación con datos oficiales DANE ·")
