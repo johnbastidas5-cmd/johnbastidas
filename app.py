@@ -263,6 +263,7 @@ with tab1:
     st.dataframe(ranking, use_container_width=True, hide_index=True)
 
 # ===================== TAB 2: EVOLUCIÓN (versión académica) =====================
+# ===================== TAB 2: EVOLUCIÓN =====================
 with tab2:
     st.subheader(f"Evolución temporal · {dept_sel}")
 
@@ -274,26 +275,49 @@ with tab2:
     """)
 
     fig = go.Figure()
+
+    # Pobreza
     fig.add_trace(go.Scatter(
-        x=serie["anio"], y=serie["pobreza"],
-        mode="lines+markers", name="Pobreza monetaria (%)",
-        line=dict(color="#b30000", width=3), marker=dict(size=10)
+        x=serie["anio"],
+        y=serie["pobreza"],
+        mode="lines+markers",
+        name="Pobreza monetaria (%)",
+        line=dict(color="#b30000", width=3),
+        marker=dict(size=10)
     ))
+
+    # Desocupación (eje derecho)
     fig.add_trace(go.Scatter(
-        x=serie["anio"], y=serie["desocupacion"],
-        mode="lines+markers", name="Tasa de desocupación (%)",
-        line=dict(color="#0f6e6b", width=3), marker=dict(size=10),
+        x=serie["anio"],
+        y=serie["desocupacion"],
+        mode="lines+markers",
+        name="Tasa de desocupación (%)",
+        line=dict(color="#0f6e6b", width=3),
+        marker=dict(size=10),
         yaxis="y2"
     ))
+
     fig.update_layout(
-        height=430,
-        yaxis=dict(title="Pobreza monetaria (%)", titlefont=dict(color="#b30000"), tickfont=dict(color="#b30000")),
-        yaxis2=dict(title="Desocupación (%)", overlaying="y", side="right",
-                    titlefont=dict(color="#0f6e6b"), tickfont=dict(color="#0f6e6b")),
-        legend=dict(orientation="h", y=1.12),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="#fffdf8"
+        height=450,
+        title=None,
+        xaxis=dict(title="Año", tickmode="array", tickvals=[2023, 2024, 2025]),
+        yaxis=dict(
+            title=dict(text="Pobreza monetaria (%)", font=dict(color="#b30000")),
+            tickfont=dict(color="#b30000"),
+            side="left"
+        ),
+        yaxis2=dict(
+            title=dict(text="Desocupación (%)", font=dict(color="#0f6e6b")),
+            tickfont=dict(color="#0f6e6b"),
+            overlaying="y",
+            side="right"
+        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.08, x=0),
+        margin=dict(t=60, b=40, l=60, r=60),
+        plot_bgcolor="#fffdf8",
+        paper_bgcolor="rgba(0,0,0,0)"
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""
@@ -306,11 +330,14 @@ with tab2:
 
     st.dataframe(
         serie[["anio", "pobreza", "desocupacion"]].rename(
-            columns={"anio": "Año", "pobreza": "Pobreza monetaria (%)", "desocupacion": "Desocupación (%)"}
+            columns={
+                "anio": "Año",
+                "pobreza": "Pobreza monetaria (%)",
+                "desocupacion": "Desocupación (%)"
+            }
         ).set_index("Año"),
         use_container_width=True
     )
-
 # ===================== TAB 3: ESPACIAL =====================
 with tab3:
     st.subheader("Análisis de autocorrelación espacial (Moran's I)")
