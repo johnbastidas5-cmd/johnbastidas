@@ -154,111 +154,78 @@ c4.metric("Menor pobreza", low["departamento"], delta=f"{low['pobreza']:.1f}%")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Mapa", "Evolución", "Espacial", "Brechas", "Asociación", "Método"])
 
-# ===================== MAPA COMPLETO =====================
+# ===================== MAPA COMPLETO (CORREGIDO) =====================
 with tab1:
     st.subheader(f"{indicador} · {anio}")
 
-    # Datos con valor oficial
     data_year = df[df["anio"] == anio].copy()
     data_year["dept_geo"] = data_year["departamento"].map(NAME_MAP)
 
-    # Creamos un dataframe con TODOS los departamentos del GeoJSON
+    # DataFrame con TODOS los departamentos del GeoJSON
     full = pd.DataFrame({"dept_geo": ALL_GEO_NAMES})
-    full = full.merge(data_year[["dept_geo", col_map, "departamento"]], on="dept_geo", how="left")
+    full = full.merge(
+        data_year[["dept_geo", col_map, "departamento"]],
+        on="dept_geo",
+        how="left"
+    )
 
-    # Los que no tienen dato quedan como NaN → se verán grises
+    # Ponemos un valor muy bajo a los que no tienen dato para poder controlar el color
+    full["valor"] = full[col_map]
+    full["valor"] = full["valor"].fillna(-999)   # valor especial para sin dato
 
     fig = px.choropleth(
         full,
         geojson=geojson,
         locations="dept_geo",
         featureidkey="properties.NOMBRE_DPT",
-        color=col_map,
-        color_continuous_scale=["#fef0d9", "#fdcc8a", "#e36d4a", "#8c2d20"],
-        range_color=(data_year[col_map].min() * 0.95, data_year[col_map].max() * 1.02),
-        labels={col_map: "%"},
-        hover_name="departamento",
-        hover_data={col_map: ":.1f", "dept_geo": False}
-    )
-
-    # Color neutro para los que no tienen dato
-    fig.update_traces(
-        marker_line_width=0.6,
-        marker_line_color="#666666",
-        colorscale=["#fef0d9", "#fdcc8a", "#e36d4a", "#8c2d20"],
-        colorbar_title="%"
-    )
-
-    # Forzar color gris en los NaN
-    fig.for_each_trace(lambda t: t.update(
-        colorscale=[
-            [0.0, "#d9d9d9"],   # gris neutro para sin dato
-            [0.0001, "#fef0d9"],
-            [0.33, "#fdcc8a"],
-            [0.66, "#e36d4a"],
+        color="valor",
+        color_continuous_scale=[
+            [0.0, "#d0d0d0"],      # gris para sin dato (-999)
+            [0.001, "#fef0d9"],
+            [0.35, "#fdcc8a"],
+            [0.65, "#e36d4a"],
             [1.0, "#8c2d20"]
-        ]
-    ) if False else None)
+        ],
+        range_color=(-999, data_year[col_map].max() * 1.05),
+        labels={"valor": "%"},
+        hover_data={"valor": False, "dept_geo": False}
+    )
 
+    # ——— ESTO ES LO MÁS IMPORTANTE ———
+    # Forzamos que se vea TODO Colombia
     fig.update_geos(
-        fitbounds="locations",
+        center=dict(lat=4.2, lon=-73.0),
+        projection_scale=5.8,          # ajusta este número si quieres más zoom
         visible=False,
         bgcolor="rgba(0,0,0,0)",
-        showframe=False
-    )
-    fig.update_layout(
-        margin=dict(r=0, t=10, l=0, b=0),
-        height=700,
-        paper_bgcolor="rgba(0,0,0,0)",
-        geo=dict(bgcolor="rgba(0,0,0,0)"),
-        coloraxis_colorbar=dict(title="%", thickness=18, len=0.65, bgcolor="#fffdf8")
+        showframe=False,
+        showcoastlines=False,
+        showland=False,
+        fitbounds=False                # ← clave: no dejes que recorte
     )
 
-    # Mejor forma de poner gris a los sin dato:
-    fig = px.choropleth(
-        full,
-        geojson=geojson,
-        locations="dept_geo",
-        featureidkey="properties.NOMBRE_DPT",
-        color=col_map,
-        color_continuous_scale=["#fef0d9", "#fdcc8a", "#e36d4a", "#8c2d20"],
-        range_color=(data_year[col_map].min()*0.95, data_year[col_map].max()*1.02),
-        labels={col_map: "%"},
-        hover_data={col_map: ":.1f", "dept_geo": False}
-    )
-    fig.update_geos(fitbounds="locations", visible=False, bgcolor="rgba(0,0,0,0)")
     fig.update_layout(
         margin=dict(r=0, t=10, l=0, b=0),
-        height=700,
+        height=720,
         paper_bgcolor="rgba(0,0,0,0)",
-        coloraxis_colorbar=dict(title="%", thickness=18, len=0.65)
+        geo=dict(bgcolor="rgba(0,0,0,0)"),
+        coloraxis_colorbar=dict(
+            title="%",
+            thickness=18,
+            len=0.6,
+            tickvals=[data_year[col_map].min(), data_year[col_map].max()],
+            ticktext=[f"{data_year[col_map].min():.0f}", f"{data_year[col_map].max():.0f}"]
+        )
     )
-    # Color de los polígonos sin dato
-    fig.update_traces(marker_line_width=0.5, marker_line_color="#555555")
+
+    # Mejorar el hover
+    fig.update_traces(
+        hovertemplate="<b>%{location}</b><br>Valor: %{z:.1f}%<extra></extra>"
+    )
 
     st.plotly_chart(fig, use_container_width=True)
 
     st.caption("Gris = sin estimación oficial del DANE (Amazonas, Arauca, Casanare, Guainía, Guaviare, Putumayo, Vaupés, Vichada y San Andrés).")
-
-# ===================== EVOLUCIÓN =====================
-with tab2:
-    st.subheader(f"Evolución · {dept_sel}")
-    serie = df[df["departamento"] == dept_sel].sort_values("anio")
-    years = serie["anio"].values
-    y_pob = serie["pobreza"].values
-    slope, intercept, *_ = stats.linregress(years, y_pob)
-    future_years = np.arange(2026, 2036)
-    future_pob = np.clip(intercept + slope * future_years, 5, 80)
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=years, y=y_pob, mode="lines+markers", name="Observado (DANE)",
-                             line=dict(color="#0f6e6b", width=3), marker=dict(size=10)))
-    fig.add_trace(go.Scatter(x=future_years, y=future_pob, mode="lines+markers", name="Proyección ilustrativa",
-                             line=dict(color="#9a3412", width=2, dash="dot"), marker=dict(size=7)))
-    fig.update_layout(height=420, yaxis_title="Pobreza (%)", legend=dict(orientation="h", y=1.12),
-                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#fffdf8")
-    st.plotly_chart(fig, use_container_width=True)
-    st.warning("La línea punteada es solo una extrapolación lineal simple (no es pronóstico oficial).")
 
 # ===================== ESPACIAL =====================
 with tab3:
