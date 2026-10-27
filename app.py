@@ -23,7 +23,7 @@ st.set_page_config(
 )
 
 # -------------------------- Estilos profesionales + modernos --------------------------
-     st.markdown("""
+  st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap');
 
@@ -31,12 +31,12 @@ html, body, [class*="css"] {
     font-family: 'Outfit', system-ui, sans-serif;
 }
 
-/* Fondo neutro */
+/* Fondo suave y neutro */
 .stApp {
     background-color: #f7f6f3;
 }
 
-/* Título */
+/* Título principal */
 .main-title {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: 2.45rem;
@@ -44,45 +44,15 @@ html, body, [class*="css"] {
     color: #1e293b;
     margin-bottom: 0.15rem;
     letter-spacing: -0.4px;
-    animation: fadeInDown 0.5s ease-out;
 }
 
 .subtitle {
     font-size: 1.05rem;
     color: #64748b;
     margin-bottom: 1.6rem;
-    animation: fadeInDown 0.6s ease-out;
 }
 
-/* Animación de entrada del contenido */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(18px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Aplica animación al contenido principal de las pestañas */
-div[data-testid="stVerticalBlock"] > div {
-    animation: fadeInUp 0.45s ease-out;
-}
-
-/* Tabs con transición */
+/* Tabs */
 .stTabs [data-baseweb="tab"] {
     height: 44px;
     border-radius: 999px;
@@ -91,21 +61,14 @@ div[data-testid="stVerticalBlock"] > div {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     color: #334155;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stTabs [data-baseweb="tab"]:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    transform: translateY(-1px);
+    transition: all 0.2s ease;
 }
 
 .stTabs [aria-selected="true"] {
     background: #0f766e !important;
     color: white !important;
     border-color: #0f766e !important;
-    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
-    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(15, 118, 110, 0.2);
 }
 
 /* Métricas */
@@ -113,14 +76,13 @@ div[data-testid="stMetricValue"] {
     font-size: 1.4rem;
     font-weight: 700;
     color: #1e293b;
-    transition: color 0.2s ease;
 }
 
 div[data-testid="stMetricLabel"] {
     color: #64748b;
 }
 
-/* Tarjetas con transición */
+/* Tarjetas */
 .card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -128,14 +90,6 @@ div[data-testid="stMetricLabel"] {
     padding: 1.2rem 1.4rem;
     margin-bottom: 1rem;
     box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeInUp 0.5s ease-out;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-    border-color: #cbd5e1;
 }
 
 .card-title {
@@ -154,7 +108,7 @@ div[data-testid="stMetricLabel"] {
     right: 25px;
     font-size: 3.6rem;
     z-index: 9999;
-    animation: bounceIn 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
     pointer-events: none;
 }
@@ -165,23 +119,13 @@ div[data-testid="stMetricLabel"] {
     100% { transform: scale(1); }
 }
 
-/* Mejor legibilidad */
+/* Mejor legibilidad general */
 p, li, span, label {
     color: #334155;
 }
 
 h1, h2, h3, h4 {
     color: #1e293b !important;
-}
-
-/* Suaviza los selectores y botones */
-.stSelectbox > div > div, .stButton > button {
-    transition: all 0.2s ease;
-}
-
-.stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 </style>
 """, unsafe_allow_html=True)
