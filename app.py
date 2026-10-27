@@ -491,8 +491,7 @@ Solo **23 departamentos + Bogotá**. Los demás aparecen en gris porque el DANE 
 - Moran’s I global + clasificación LISA por cuadrantes  
 - 499 permutaciones para el p-valor
 
-### Limitaciones
-- Serie temporal corta (T=3) → no se estiman SAR/SEM/SpVAR  
+### Limitaciones 
 - No se imputan datos faltantes  
 - La relación pobreza-desocupación es correlacional
 
