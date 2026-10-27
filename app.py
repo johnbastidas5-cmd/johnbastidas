@@ -1,5 +1,5 @@
 # =============================================================================
-# Brechas Territoriales Colombia - Versión Pop-Art + Mapa Real
+# Brechas Territoriales Colombia - Mapa Completo + Diseño Pop-Art
 # Datos oficiales DANE (23 departamentos + Bogotá) - Sin estimaciones
 # =============================================================================
 
@@ -14,7 +14,7 @@ from urllib.request import urlopen
 from datetime import datetime
 
 # -----------------------------------------------------------------------------
-# Configuración
+# Configuración de página
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Brechas Territoriales | Colombia",
@@ -23,10 +23,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS estilo Pop-Art / moderno
+# CSS Pop-Art mejorado
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Space Grotesk', sans-serif;
@@ -34,53 +34,45 @@ st.markdown("""
     
     .main-title {
         font-family: 'Archivo Black', sans-serif;
-        font-size: 2.6rem;
-        background: linear-gradient(90deg, #FF2E63, #08D9D6, #FF9A3C);
+        font-size: 2.8rem;
+        background: linear-gradient(90deg, #FF2E63, #FF9A3C, #08D9D6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.1rem;
-        line-height: 1.1;
+        margin-bottom: 0.15rem;
+        line-height: 1.05;
     }
     
     .subtitle {
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         color: #4a5568;
-        margin-bottom: 1.8rem;
-    }
-    
-    .metric-box {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        color: white;
-        border-radius: 16px;
-        padding: 1.1rem 1.3rem;
-        border: 3px solid #FF2E63;
-        box-shadow: 6px 6px 0px #08D9D6;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
     }
     
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 8px;
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 46px;
+        height: 44px;
         border-radius: 12px;
-        padding: 0 20px;
+        padding: 0 18px;
         font-weight: 700;
-        background: #f0f0f0;
+        background: #f1f1f1;
     }
     
     .stTabs [aria-selected="true"] {
-        background: #FF2E63 !important;
+        background: linear-gradient(90deg, #FF2E63, #FF9A3C) !important;
         color: white !important;
     }
     
     div[data-testid="stMetricValue"] {
-        font-size: 1.6rem;
+        font-size: 1.55rem;
         font-weight: 700;
     }
     
-    .sidebar .sidebar-content {
-        background: #0f0f23;
+    .stSelectbox label, .stSlider label {
+        font-weight: 600 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -129,36 +121,60 @@ def load_data():
         "pobreza": [34.6, 31.8, 28.0],
         "desocupacion": [10.2, 9.7, 8.9]
     })
-    return df, nacional, depts
+    return df, nacional
 
-df, nacional, depts_dict = load_data()
+df, nacional = load_data()
 
 # -----------------------------------------------------------------------------
-# GeoJSON de Colombia (departamentos) - fuente pública confiable
+# GeoJSON + Mapeo de nombres CORREGIDO
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_geojson():
     url = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json"
     with urlopen(url) as response:
         geo = json.load(response)
-    # Añadir id para Plotly
     for feature in geo["features"]:
         feature["id"] = feature["properties"]["NOMBRE_DPT"]
     return geo
 
 geojson = load_geojson()
 
+# Mapeo exacto de nombres (esto era lo que fallaba)
+NAME_MAP = {
+    "Antioquia": "ANTIOQUIA",
+    "Atlántico": "ATLÁNTICO",
+    "Bogotá D.C.": "BOGOTÁ, D.C.",
+    "Bolívar": "BOLÍVAR",
+    "Boyacá": "BOYACÁ",
+    "Caldas": "CALDAS",
+    "Caquetá": "CAQUETÁ",
+    "Cauca": "CAUCA",
+    "Cesar": "CESAR",
+    "Córdoba": "CÓRDOBA",
+    "Cundinamarca": "CUNDINAMARCA",
+    "Chocó": "CHOCÓ",
+    "Huila": "HUILA",
+    "La Guajira": "LA GUAJIRA",
+    "Magdalena": "MAGDALENA",
+    "Meta": "META",
+    "Nariño": "NARIÑO",
+    "Norte de Santander": "NORTE DE SANTANDER",
+    "Quindío": "QUINDÍO",
+    "Risaralda": "RISARALDA",
+    "Santander": "SANTANDER",
+    "Sucre": "SUCRE",
+    "Tolima": "TOLIMA",
+    "Valle del Cauca": "VALLE DEL CAUCA"
+}
+
 # -----------------------------------------------------------------------------
 # Sidebar
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("## Controles")
+    st.markdown("### Controles")
     st.caption("DANE · GEIH · 23 deptos + Bogotá")
     
-    indicador = st.selectbox(
-        "Indicador",
-        ["Pobreza monetaria (%)", "Tasa de desocupación (%)"]
-    )
+    indicador = st.selectbox("Indicador", ["Pobreza monetaria (%)", "Tasa de desocupación (%)"])
     col_map = "pobreza" if "Pobreza" in indicador else "desocupacion"
     
     anio = st.selectbox("Año", [2025, 2024, 2023])
@@ -170,30 +186,24 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    st.info("Solo datos oficiales DANE.\nSin series inventadas ni SpVAR.")
+    st.success("Solo datos oficiales DANE")
+    st.caption("Sin series inventadas ni SpVAR")
 
 # -----------------------------------------------------------------------------
 # Header
 # -----------------------------------------------------------------------------
 st.markdown('<p class="main-title">Brechas Territoriales</p>', unsafe_allow_html=True)
-st.markdown(
-    '<p class="subtitle">Mercado laboral y pobreza monetaria en Colombia · Análisis espacial con datos oficiales DANE</p>',
-    unsafe_allow_html=True
-)
+st.markdown('<p class="subtitle">Mercado laboral y pobreza monetaria en Colombia · Análisis espacial con datos oficiales DANE</p>', unsafe_allow_html=True)
 
-# Métricas
+# Métricas rápidas
 nat = nacional[nacional["anio"] == anio].iloc[0]
 c1, c2, c3, c4 = st.columns(4)
-with c1:
-    st.metric("Nacional Pobreza", f"{nat['pobreza']:.1f}%")
-with c2:
-    st.metric("Nacional Desocupación", f"{nat['desocupacion']:.1f}%")
-with c3:
-    top = df[df["anio"]==anio].loc[df[df["anio"]==anio]["pobreza"].idxmax()]
-    st.metric("Mayor pobreza", top["departamento"], delta=f"{top['pobreza']:.1f}%", delta_color="inverse")
-with c4:
-    low = df[df["anio"]==anio].loc[df[df["anio"]==anio]["pobreza"].idxmin()]
-    st.metric("Menor pobreza", low["departamento"], delta=f"{low['pobreza']:.1f}%")
+c1.metric("Nacional Pobreza", f"{nat['pobreza']:.1f}%")
+c2.metric("Nacional Desocupación", f"{nat['desocupacion']:.1f}%")
+top = df[df["anio"]==anio].loc[df[df["anio"]==anio]["pobreza"].idxmax()]
+c3.metric("Mayor pobreza", top["departamento"], delta=f"{top['pobreza']:.1f}%", delta_color="inverse")
+low = df[df["anio"]==anio].loc[df[df["anio"]==anio]["pobreza"].idxmin()]
+c4.metric("Menor pobreza", low["departamento"], delta=f"{low['pobreza']:.1f}%")
 
 st.markdown("")
 
@@ -204,20 +214,12 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     ["🗺️ Mapa", "📈 Evolución", "🔗 Espacial", "📊 Brechas", "📉 Asociación", "📘 Método"]
 )
 
-# ====================== TAB MAPA (COROPLÉTICO REAL) ======================
+# ====================== TAB MAPA ======================
 with tab1:
     st.subheader(f"Mapa de {indicador} · {anio}")
     
     data_year = df[df["anio"] == anio].copy()
-    
-    # Normalizar nombres para que coincidan con el GeoJSON (mayúsculas)
-    name_map = {
-        "Bogotá D.C.": "BOGOTÁ, D.C.",
-        "Norte de Santander": "NORTE DE SANTANDER",
-        "Valle del Cauca": "VALLE DEL CAUCA",
-        "La Guajira": "LA GUAJIRA"
-    }
-    data_year["dept_geo"] = data_year["departamento"].replace(name_map).str.upper()
+    data_year["dept_geo"] = data_year["departamento"].map(NAME_MAP)
     
     fig = px.choropleth(
         data_year,
@@ -225,9 +227,9 @@ with tab1:
         locations="dept_geo",
         featureidkey="properties.NOMBRE_DPT",
         color=col_map,
-        color_continuous_scale=["#08D9D6", "#FFEE58", "#FF9A3C", "#FF2E63", "#9B2335"],
-        range_color=(data_year[col_map].min()*0.9, data_year[col_map].max()*1.05),
-        labels={col_map: indicador},
+        color_continuous_scale=["#00F5D4", "#FEE440", "#F15BB5", "#9B5DE5", "#FF0A54"],
+        range_color=(data_year[col_map].min() * 0.95, data_year[col_map].max() * 1.02),
+        labels={col_map: "%"},
         hover_name="departamento",
         hover_data={col_map: ":.1f", "dept_geo": False}
     )
@@ -235,26 +237,31 @@ with tab1:
     fig.update_geos(
         fitbounds="locations",
         visible=False,
-        bgcolor="rgba(0,0,0,0)"
+        projection_type="mercator",
+        bgcolor="rgba(0,0,0,0)",
+        resolution=50
     )
+    
     fig.update_layout(
-        margin={"r":0,"t":30,"l":0,"b":0},
-        height=620,
+        margin={"r": 0, "t": 20, "l": 0, "b": 0},
+        height=680,
         coloraxis_colorbar=dict(
             title="%",
-            thickness=18,
-            len=0.6,
-            bgcolor="rgba(255,255,255,0.8)",
+            thickness=22,
+            len=0.65,
+            x=1.02,
+            bgcolor="white",
             borderwidth=2,
-            bordercolor="#FF2E63"
+            bordercolor="#FF2E63",
+            outlinewidth=0
         ),
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Space Grotesk")
+        geo=dict(bgcolor="rgba(0,0,0,0)")
     )
     
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Fuente: DANE – Anexos oficiales de Pobreza Monetaria Departamental y GEIH. GeoJSON basado en MGN DANE.")
+    
+    st.caption("Fuente: DANE – Anexos oficiales de Pobreza Monetaria Departamental y GEIH. Solo se muestran los 23 departamentos + Bogotá con estimación oficial.")
 
 # ====================== TAB EVOLUCIÓN ======================
 with tab2:
@@ -266,28 +273,28 @@ with tab2:
         x=serie["anio"], y=serie["pobreza"],
         mode="lines+markers", name="Pobreza monetaria",
         line=dict(color="#FF2E63", width=4),
-        marker=dict(size=12, symbol="circle")
+        marker=dict(size=13)
     ))
     fig.add_trace(go.Scatter(
         x=serie["anio"], y=serie["desocupacion"],
         mode="lines+markers", name="Desocupación",
         line=dict(color="#08D9D6", width=4),
-        marker=dict(size=12, symbol="diamond"),
+        marker=dict(size=13, symbol="diamond"),
         yaxis="y2"
     ))
     fig.update_layout(
-        height=430,
+        height=440,
         yaxis=dict(title="Pobreza (%)", color="#FF2E63"),
         yaxis2=dict(title="Desocupación (%)", overlaying="y", side="right", color="#08D9D6"),
-        legend=dict(orientation="h", y=1.15),
+        legend=dict(orientation="h", y=1.14),
         margin=dict(t=50),
         paper_bgcolor="rgba(0,0,0,0)"
     )
     st.plotly_chart(fig, use_container_width=True)
     
     st.dataframe(
-        serie[["anio","pobreza","desocupacion"]].rename(
-            columns={"anio":"Año","pobreza":"Pobreza (%)","desocupacion":"Desocupación (%)"}
+        serie[["anio", "pobreza", "desocupacion"]].rename(
+            columns={"anio": "Año", "pobreza": "Pobreza (%)", "desocupacion": "Desocupación (%)"}
         ).set_index("Año"),
         use_container_width=True
     )
@@ -301,14 +308,14 @@ with tab3:
     n = len(y)
     
     vecinos = {
-        "05":["15","17","18","27","68","73"], "08":["13","20","47"], "11":["25"],
-        "13":["08","20","23","47","70"], "15":["05","25","54","68"], "17":["05","63","66","73"],
-        "18":["05","19","41","50"], "19":["18","27","41","52","76"], "20":["08","13","44","47","54"],
-        "23":["13","27","70"], "25":["11","15","50","73"], "27":["05","19","23","76"],
-        "41":["18","19","50","73"], "44":["20"], "47":["08","13","20"], "50":["18","25","41","73"],
-        "52":["19"], "54":["15","20","68"], "63":["17","66","73"], "66":["17","63","76"],
-        "68":["05","15","54"], "70":["13","23"], "73":["05","17","25","41","50","63"],
-        "76":["19","27","66"]
+        "05": ["15","17","18","27","68","73"], "08": ["13","20","47"], "11": ["25"],
+        "13": ["08","20","23","47","70"], "15": ["05","25","54","68"], "17": ["05","63","66","73"],
+        "18": ["05","19","41","50"], "19": ["18","27","41","52","76"], "20": ["08","13","44","47","54"],
+        "23": ["13","27","70"], "25": ["11","15","50","73"], "27": ["05","19","23","76"],
+        "41": ["18","19","50","73"], "44": ["20"], "47": ["08","13","20"], "50": ["18","25","41","73"],
+        "52": ["19"], "54": ["15","20","68"], "63": ["17","66","73"], "66": ["17","63","76"],
+        "68": ["05","15","54"], "70": ["13","23"], "73": ["05","17","25","41","50","63"],
+        "76": ["19","27","66"]
     }
     
     codes = list(data_year.index)
@@ -331,10 +338,10 @@ with tab3:
     col_a, col_b, col_c = st.columns(3)
     col_a.metric("Moran's I", f"{I:.4f}")
     col_b.metric("p-valor", f"{p_val:.4f}")
-    col_c.metric("Interpretación", "Significativo" if p_val < 0.05 else "No significativo")
+    col_c.metric("Resultado", "Significativo ✓" if p_val < 0.05 else "No significativo")
     
     if p_val < 0.05:
-        st.success("Hay evidencia de autocorrelación espacial positiva (concentración geográfica).")
+        st.success("Existe autocorrelación espacial positiva significativa (los valores similares tienden a concentrarse geográficamente).")
     else:
         st.info("No se detecta autocorrelación espacial significativa al 5%.")
 
@@ -349,12 +356,12 @@ with tab4:
     fig = px.bar(
         data_year, x="brecha", y="departamento", orientation="h",
         color="brecha",
-        color_continuous_scale=["#08D9D6", "#FFEE58", "#FF2E63"],
+        color_continuous_scale=["#00F5D4", "#FEE440", "#FF2E63"],
         labels={"brecha": "Diferencia (pp)"},
-        height=680
+        height=700
     )
     fig.add_vline(x=0, line_dash="dash", line_color="#1a1a2e", line_width=2)
-    fig.update_layout(margin=dict(l=10,r=10,t=20,b=10))
+    fig.update_layout(margin=dict(l=10, r=10, t=20, b=10))
     st.plotly_chart(fig, use_container_width=True)
 
 # ====================== TAB ASOCIACIÓN ======================
@@ -366,16 +373,17 @@ with tab5:
     
     fig = px.scatter(
         data_year, x="desocupacion", y="pobreza", text="departamento",
-        color="pobreza", color_continuous_scale=["#08D9D6", "#FF2E63"],
-        labels={"desocupacion":"Desocupación (%)", "pobreza":"Pobreza (%)"},
-        height=520
+        color="pobreza",
+        color_continuous_scale=["#00F5D4", "#FF2E63"],
+        labels={"desocupacion": "Desocupación (%)", "pobreza": "Pobreza (%)"},
+        height=530
     )
-    fig.update_traces(textposition="top center", textfont_size=10, marker=dict(size=14, line=dict(width=1, color="white")))
+    fig.update_traces(textposition="top center", textfont_size=10, marker=dict(size=15, line=dict(width=1, color="white")))
     
     x_line = np.linspace(data_year["desocupacion"].min(), data_year["desocupacion"].max(), 40)
     fig.add_trace(go.Scatter(
-        x=x_line, y=intercept + slope*x_line,
-        mode="lines", name=f"OLS  R²={r**2:.3f}",
+        x=x_line, y=intercept + slope * x_line,
+        mode="lines", name=f"OLS  R² = {r**2:.3f}",
         line=dict(color="#1a1a2e", width=3, dash="dot")
     ))
     st.plotly_chart(fig, use_container_width=True)
@@ -388,24 +396,23 @@ with tab6:
     st.subheader("Método y fuentes")
     st.markdown(f"""
 ### Fuentes certificadas
-- DANE – Anexo de Pobreza Monetaria Departamental (2023-2025)
-- DANE – GEIH Departamentos (tasa de desocupación)
+- **DANE** – Anexo de Pobreza Monetaria Departamental (2023, 2024 y 2025)
+- **DANE** – GEIH Departamentos (tasa de desocupación)
 - Cobertura oficial: **23 departamentos + Bogotá D.C.**
 
-### Por qué solo 23 + Bogotá
-El DANE no publica estimaciones departamentales de pobreza y mercado laboral para Amazonas, Arauca, Casanare, Guainía, Guaviare, Putumayo, Vaupés, Vichada y San Andrés por insuficiencia de muestra en la GEIH.
+### ¿Por qué solo 23 + Bogotá?
+El DANE no publica estimaciones departamentales para Amazonas, Arauca, Casanare, Guainía, Guaviare, Putumayo, Vaupés, Vichada y San Andrés por insuficiencia de muestra en la GEIH.
 
 ### Análisis espacial
-- Matriz de pesos: contigüidad Queen
+- Matriz de pesos: contigüidad tipo Queen
 - Estadístico: Moran’s I con 499 permutaciones
 
-### Limitaciones honestas
+### Limitaciones
 - Serie temporal corta (T=3) → no se estiman modelos SAR/SEM ni SpVAR
-- Asociación correlacional, no causal
-- Datos exactamente como los publicó el DANE
+- La asociación entre pobreza y desocupación es correlacional, no causal
 
-**Fecha de construcción del panel:** {datetime.now().strftime("%Y-%m-%d")}
+**Fecha de construcción:** {datetime.now().strftime("%Y-%m-%d")}
     """)
 
 st.markdown("---")
-st.caption("Datos oficiales DANE · Sin series inventadas · Diseño Pop-Art para visualización académica")
+st.caption("Datos oficiales DANE · Sin series inventadas · Diseño Pop-Art")
