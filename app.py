@@ -35,18 +35,26 @@ st.markdown("""
 # --------------------------
 @st.cache_data
 def cargar_datos():
-    base = Path("ENTREGABLES_PASTO/data")
-    try:
-        pasto = pd.read_csv(base / "serie_completa_pasto.csv", parse_dates=["date"])
-        anual = pd.read_csv(base / "resumen_anual_pasto.csv")
-        # Filtrar periodo principal 2017-2025
-        pasto = pasto[pasto["year"] <= 2025].copy()
-        anual = anual[anual["year"] <= 2025].copy()
-        return pasto, anual
-    except Exception as e:
-        st.error(f"No se encontraron los datos. Error: {e}")
-        st.stop()
-
+    # Prueba varias rutas posibles
+    posibles_rutas = [
+        Path("ENTREGABLES_PASTO/data"),
+        Path("data"),
+        Path("app_pasto"),
+        Path("."),
+    ]
+    
+    for ruta in posibles_rutas:
+        archivo1 = ruta / "serie_completa_pasto.csv"
+        archivo2 = ruta / "resumen_anual_pasto.csv"
+        if archivo1.exists() and archivo2.exists():
+            pasto = pd.read_csv(archivo1, parse_dates=["date"])
+            anual = pd.read_csv(archivo2)
+            pasto = pasto[pasto["year"] <= 2025].copy()
+            anual = anual[anual["year"] <= 2025].copy()
+            return pasto, anual
+    
+    st.error("No se encontraron los archivos CSV. Asegúrate de tener serie_completa_pasto.csv y resumen_anual_pasto.csv")
+    st.stop()
 pasto, anual = cargar_datos()
 
 # --------------------------
