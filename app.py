@@ -35,12 +35,15 @@ st.markdown("""
 # --------------------------
 @st.cache_data
 def cargar_datos():
-    # Prueba varias rutas posibles
+    # Obtiene la ruta de la carpeta donde está guardado este archivo .py actual
+    directorio_actual = Path(__file__).parent if "__file__" in locals() else Path(".")
+    
+    # Define las rutas posibles relativas a la ubicación del script
     posibles_rutas = [
-        Path("ENTREGABLES_PASTO/data"),
+        directorio_actual / "data",
+        directorio_actual / "ENTREGABLES_PASTO" / "data",
         Path("data"),
-        Path("app_pasto"),
-        Path("."),
+        Path("ENTREGABLES_PASTO/data"),
     ]
     
     for ruta in posibles_rutas:
@@ -53,8 +56,9 @@ def cargar_datos():
             anual = anual[anual["year"] <= 2025].copy()
             return pasto, anual
     
-    st.error("No se encontraron los archivos CSV. Asegúrate de tener serie_completa_pasto.csv y resumen_anual_pasto.csv")
+    st.error("No se encontraron los archivos CSV. Verifica que la carpeta 'data' esté en el mismo directorio que tu script con los archivos 'serie_completa_pasto.csv' y 'resumen_anual_pasto.csv'.")
     st.stop()
+
 pasto, anual = cargar_datos()
 
 # --------------------------
